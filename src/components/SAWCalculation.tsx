@@ -6,7 +6,13 @@ import { Calculator, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface SAWCalculationProps {
-  criteria: any;
+  criteria: {
+    harga: number;
+    jarak: number;
+    pencahayaan: number;
+    fasilitas: number;
+    kenyamanan: number;
+  };
   alternatives: any[];
   setResults: React.Dispatch<React.SetStateAction<any[]>>;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
@@ -25,7 +31,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
 
   const calculateSAW = () => {
     // Validasi data
-    const totalWeight = Object.values(criteria).reduce((sum, val) => sum + val, 0);
+    const totalWeight = (Object.values(criteria) as number[]).reduce((sum: number, val: number) => sum + val, 0);
     if (Math.abs(totalWeight - 1) > 0.01) {
       toast({
         title: "Error",
@@ -37,7 +43,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
 
     // Cek apakah semua alternatif memiliki data
     const hasEmptyData = alternatives.some(alt => 
-      Object.values(alt.values).some(val => val <= 0)
+      (Object.values(alt.values) as number[]).some((val: number) => val <= 0)
     );
     
     if (hasEmptyData) {
@@ -55,8 +61,8 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
       const normalized = [];
 
       // Cari max untuk setiap kriteria (benefit) dan min untuk cost
-      const maxValues = {};
-      const minValues = {};
+      const maxValues: {[key: string]: number} = {};
+      const minValues: {[key: string]: number} = {};
       
       criteriaKeys.forEach(key => {
         const values = alternatives.map(alt => alt.values[key]);
@@ -67,7 +73,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
       // Normalisasi setiap alternatif
       alternatives.forEach(alt => {
         const normalizedRow = { ...alt };
-        const normalizedValues = {};
+        const normalizedValues: {[key: string]: number} = {};
         
         criteriaKeys.forEach(key => {
           // Untuk kriteria cost (harga, jarak), gunakan min/value
@@ -89,7 +95,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
       const scores = normalized.map(alt => {
         let totalScore = 0;
         criteriaKeys.forEach(key => {
-          totalScore += alt.normalizedValues[key] * criteria[key];
+          totalScore += alt.normalizedValues[key] * criteria[key as keyof typeof criteria];
         });
         
         return {
@@ -113,7 +119,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
 
       toast({
         title: "Perhitungan Berhasil",
-        description: "Perhitungan SAW telah selesai. Lihat hasil di tab 'Hasil Ranking'."
+        description: "Perhitungan SAW telah selesai. Lihat hasil di bawah."
       });
 
     } catch (error) {
@@ -148,10 +154,10 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
               <CardContent className="pt-4">
                 <div className="text-sm font-medium text-blue-600">Status Bobot Kriteria</div>
                 <div className="text-2xl font-bold">
-                  {Object.values(criteria).reduce((sum, val) => sum + val, 0).toFixed(3)}
+                  {((Object.values(criteria) as number[]).reduce((sum: number, val: number) => sum + val, 0)).toFixed(3)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {Math.abs(Object.values(criteria).reduce((sum, val) => sum + val, 0) - 1) < 0.01 
+                  {Math.abs((Object.values(criteria) as number[]).reduce((sum: number, val: number) => sum + val, 0) - 1) < 0.01 
                     ? "✅ Siap untuk perhitungan" 
                     : "❌ Perlu normalisasi"}
                 </div>
@@ -163,7 +169,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
                 <div className="text-sm font-medium text-green-600">Status Data Alternatif</div>
                 <div className="text-2xl font-bold">
                   {alternatives.filter(alt => 
-                    Object.values(alt.values).every(val => val > 0)
+                    (Object.values(alt.values) as number[]).every((val: number) => val > 0)
                   ).length}/{alternatives.length}
                 </div>
                 <div className="text-sm text-gray-500">Alternatif lengkap</div>
@@ -190,16 +196,6 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
               {showSteps ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
               {showSteps ? 'Sembunyikan' : 'Tampilkan'} Langkah
             </Button>
-
-            {isCalculated && (
-              <Button 
-                onClick={viewResults}
-                variant="secondary"
-                size="lg"
-              >
-                Lihat Hasil Ranking
-              </Button>
-            )}
           </div>
 
           {/* Langkah-langkah Perhitungan */}
@@ -294,7 +290,7 @@ const SAWCalculation: React.FC<SAWCalculationProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {normalizedMatrix.map((alt) => (
+                      {normalizedMatrix.map((alt: any) => (
                         <tr key={alt.id}>
                           <td className="border border-gray-300 p-2 font-medium">{alt.name}</td>
                           <td className="border border-gray-300 p-2 text-center">
